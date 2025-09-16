@@ -129,6 +129,12 @@ def exercise_done_ratio(d_str: str, day: str):
     return total_sets, done_sets, full_exercises
 
 
+def _safe_rerun():
+    try:
+        st.rerun()
+    except Exception:
+        st.experimental_rerun()
+
 # -----------------------
 # Sidebar Controls
 # -----------------------
@@ -177,30 +183,44 @@ with st.sidebar:
     if st.button("🔁 Reset selected exercise", use_container_width=True, type="secondary"):
         if chosen != "All exercises":
             idx = ex_names.index(chosen)
-            sets = WORKOUT_PLAN[day][idx]["sets"]
-            for s in range(sets):
-                st.session_state[set_key(date_str, day, idx, s)] = False
-            st.toast(f"Reset: {chosen}")
+            st.session_state["__pending_action__"] = {
+                "type": "exercise", "date": date_str, "day": day,
+                "ex_idx": idx, "value": False,
+                "msg": f"Reset: {chosen}"
+            }
+            _safe_rerun()
         else:
             st.info("Pick a single workout to reset.")
 
     if st.button("🧹 Reset this day", use_container_width=True):
-        for i, ex in enumerate(WORKOUT_PLAN[day]):
-            for s in range(ex["sets"]):
-                st.session_state[set_key(date_str, day, i, s)] = False
-        st.toast(f"Cleared all sets for {day} on {date_str}")
+        st.session_state["__pending_action__"] = {
+            "type": "day", "date": date_str, "day": day,
+            "value": False, "msg": f"Cleared all sets for {day} on {date_str}"
+        }
+        _safe_rerun()
 
+# -----------------------
+# Apply any deferred actions BEFORE rendering widgets
+# -----------------------
+action = st.session_state.pop("__pending_action__", None)
+if action:
+    if action["type"] == "exercise":
+        ex = WORKOUT_PLAN[action["day"]][action["ex_idx"]]
+        for s in range(ex["sets"]):
+            st.session_state[set_key(action["date"], action["day"], action["ex_idx"], s)] = action["value"]
+        st.toast(action.get("msg", "Updated"))
+    elif action["type"] == "day":
+        for i, ex in enumerate(WORKOUT_PLAN[action["day"]]):
+            for s in range(ex["sets"]):
+                st.session_state[set_key(action["date"], action["day"], i, s)] = action["value"]
+        st.toast(action.get("msg", "Updated"))
 
 # -----------------------
 # Header & KPIs
 # -----------------------
 st.markdown(
     f"""
-    <div class="app-header">
-      <div class="pill">📆 <span>{date_str}</span></div>
-      <h1 class="app-title">Workout Progress Tracker</h1>
-      <p class="app-sub">Select your day & workout, then check off sets as you go. Export or import progress anytime.</p>
-    </div>
+    <div class=\"app-header\">\n      <div class=\"pill\">📆 <span>{date_str}</span></div>\n      <h1 class=\"app-title\">Workout Progress Tracker</h1>\n      <p class=\"app-sub\">Select your day & workout, then check off sets as you go. Export or import progress anytime.</p>\n    </div>
     """,
     unsafe_allow_html=True,
 )
@@ -247,6 +267,7 @@ with tracker_tab:
                     unsafe_allow_html=True,
                 )
             with c2:
+                # Calculate flag based on session state
                 all_done = all(
                     st.session_state.get(set_key(date_str, day, i, s), False)
                     for s in range(ex["sets"])
@@ -258,27 +279,34 @@ with tracker_tab:
 
             st.markdown("<div class='hr'></div>", unsafe_allow_html=True)
 
-            # Render set checkboxes in a responsive grid
+            # Ensure keys exist before widgets, then render set checkboxes in a responsive grid
             cols = st.columns(min(5, ex["sets"]))
             for s in range(ex["sets"]):
+                key = set_key(date_str, day, i, s)
+                if key not in st.session_state:
+                    st.session_state[key] = False
                 with cols[s % len(cols)]:
                     st.checkbox(
                         f"Set {s+1}",
-                        key=set_key(date_str, day, i, s),
+                        key=key,
                     )
 
-            # Action buttons for this exercise
+            # Action buttons for this exercise (deferred mutation + rerun)
             b1, b2, _ = st.columns([1,1,4])
             with b1:
                 if st.button("Mark all done", key=f"done_{i}"):
-                    for s in range(ex["sets"]):
-                        st.session_state[set_key(date_str, day, i, s)] = True
-                    st.toast(f"Completed: {ex['name']}")
+                    st.session_state["__pending_action__"] = {
+                        "type": "exercise", "date": date_str, "day": day,
+                        "ex_idx": i, "value": True, "msg": f"Completed: {ex['name']}"
+                    }
+                    _safe_rerun()
             with b2:
                 if st.button("Reset", key=f"reset_{i}"):
-                    for s in range(ex["sets"]):
-                        st.session_state[set_key(date_str, day, i, s)] = False
-                    st.toast(f"Reset: {ex['name']}")
+                    st.session_state["__pending_action__"] = {
+                        "type": "exercise", "date": date_str, "day": day,
+                        "ex_idx": i, "value": False, "msg": f"Reset: {ex['name']}"
+                    }
+                    _safe_rerun()
 
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -313,4 +341,3 @@ with progress_tab:
 # ---------------
 # End of script
 # ---------------
-
