@@ -1,4 +1,4 @@
-# Workout Progress Tracker — Streamlit (Liquid Glass theme, no sidebar)
+# Workout Progress Tracker — Streamlit (Liquid Glass MAX theme, no sidebar)
 # Save as: app.py
 # Run with: streamlit run app.py
 
@@ -18,78 +18,98 @@ st.set_page_config(
 )
 
 # =======================
-# Liquid Glass THEME CSS
+# Liquid Glass MAX THEME CSS (animations galore)
 # =======================
 st.markdown(
     """
     <style>
-      /* Import clean modern fonts */
+      /* Fonts */
       @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Space+Grotesk:wght@400;600;700&display=swap');
-
       html, body, [class^="css"]  { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif; }
 
-      /* Vivid animated gradient background */
-      .liquid-bg {
-        position: fixed; inset: 0; z-index: -1; overflow: hidden;
-        background: radial-gradient(1200px 600px at 20% -10%, rgba(99,102,241,0.20), transparent),
-                    radial-gradient(900px 500px at 80% -10%, rgba(16,185,129,0.18), transparent),
-                    radial-gradient(700px 400px at 50% 110%, rgba(236,72,153,0.18), transparent),
-                    linear-gradient(180deg, #0b1020 0%, #0e1222 100%);
+      /* Root color tokens */
+      :root{
+        --bg-dark:#0b1020; --bg-darker:#0a0f1e; --fg:#e5e7eb; --muted:#9fb3c8;
+        --accentA:#6366f1; --accentB:#10b981; --accentC:#ec4899; --accentD:#f59e0b;
+        --glass: rgba(255,255,255,0.06); --glass-soft: rgba(255,255,255,0.05);
       }
-      .bubble { position:absolute; border-radius:50%; filter: blur(24px); opacity:.45; animation: drift 26s ease-in-out infinite alternate; }
-      .b1 { width:480px; height:480px; background:#60a5fa55; left:5%; top:15%; }
-      .b2 { width:380px; height:380px; background:#34d39955; right:8%; top:8%; animation-duration: 32s; }
-      .b3 { width:520px; height:520px; background:#f472b655; left:35%; bottom:-10%; animation-duration: 28s; }
-      @keyframes drift { from { transform: translateY(-10px) translateX(-10px) } to { transform: translateY(20px) translateX(20px) } }
 
-      /* Glass containers */
-      .glass { backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10); border-radius:16px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
-      .glass-soft { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); background: rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:14px; }
+      /* Background: animated gradients + parallax bubbles */
+      .liquid-bg { position: fixed; inset: 0; z-index: -2; overflow: hidden; background: linear-gradient(180deg, var(--bg-dark), var(--bg-darker)); }
+      .blob { position:absolute; border-radius:50%; filter: blur(26px); opacity:.45; animation: drift 26s ease-in-out infinite alternate; }
+      .b1 { width:520px; height:520px; background: color-mix(in oklab, var(--accentA) 45%, transparent); left:5%; top:12%; animation-duration:30s; }
+      .b2 { width:420px; height:420px; background: color-mix(in oklab, var(--accentB) 45%, transparent); right:8%; top:8%; animation-duration: 36s; }
+      .b3 { width:620px; height:620px; background: color-mix(in oklab, var(--accentC) 45%, transparent); left:35%; bottom:-15%; animation-duration: 28s; }
+      @keyframes drift { from { transform: translateY(-12px) translateX(-12px) } to { transform: translateY(22px) translateX(22px) } }
+
+      /* Star sparkle layer */
+      .stars { position: fixed; inset:0; z-index:-1; background: radial-gradient(2px 2px at 20% 30%, #ffffff33, transparent), radial-gradient(1px 1px at 70% 60%, #ffffff22, transparent), radial-gradient(1px 1px at 40% 80%, #ffffff22, transparent); animation: twinkle 6s ease-in-out infinite alternate; }
+      @keyframes twinkle { from { opacity:.6 } to { opacity:1 } }
+
+      /* Glass with animated border glow */
+      .glass { position: relative; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); background: var(--glass); border:1px solid rgba(255,255,255,0.10); border-radius:18px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); overflow:hidden; }
+      .glass::before{ content:""; position:absolute; inset:-1px; border-radius:inherit; padding:1px; background: conic-gradient(from 0deg, var(--accentA), var(--accentB), var(--accentC), var(--accentD), var(--accentA)); -webkit-mask:linear-gradient(#000,#000) content-box, linear-gradient(#000,#000); -webkit-mask-composite: xor; mask-composite: exclude; animation: spin 18s linear infinite; opacity:.28; }
+      @keyframes spin { to { transform: rotate(360deg) } }
 
       /* Header */
       .app-header { padding: 22px 22px; margin-top: 4px; }
-      .app-title { font-family:'Space Grotesk', sans-serif; font-weight:800; font-size: 30px; margin:0; color: #e5e7eb; letter-spacing: .3px; }
-      .app-sub { color: #9fb3c8; margin: 6px 0 0 0; }
+      .app-title { font-family:'Space Grotesk', sans-serif; font-weight:800; font-size: 34px; margin:0; color: var(--fg); letter-spacing: .3px; background: linear-gradient(90deg, #fff, #c7d2fe, #a7f3d0, #fbcfe8); -webkit-background-clip:text; background-clip:text; color:transparent; animation: sheen 10s linear infinite; background-size:300% 100%; }
+      @keyframes sheen { 0%{background-position:0% 50%} 100%{background-position:100% 50%} }
+      .app-sub { color: var(--muted); margin: 6px 0 0 0; }
 
-      /* Top toolbar sticky */
+      /* Sticky toolbar */
       .toolbar { position: sticky; top: 0; z-index: 50; padding: 10px; margin: 12px 0 14px; }
       .toolbar-inner { display:flex; gap:10px; align-items:center; justify-content:space-between; }
-      .toolbar-left { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-      .toolbar-right { display:flex; gap:8px; align-items:center; }
+      .toolbar-left, .toolbar-right { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 
-      /* Inputs styling (subtle glass) */
+      /* Streamlit inputs subtle styling */
       .stSelectbox, .stDateInput, .stFileUploader, .stDownloadButton, .stTextInput { filter: drop-shadow(0 2px 10px rgba(0,0,0,.15)); }
 
-      /* KPI chips */
-      .kpi { display:flex; flex-direction:column; gap:4px; padding: 14px; }
-      .kpi h3 { margin:0; font-size:12px; color:#9fb3c8; font-weight:700; letter-spacing:.3px; }
-      .kpi p { margin:0; font-size:22px; font-weight:800; color:#e5e7eb; }
+      /* KPI chips with pulse glow */
+      .kpi { display:flex; flex-direction:column; gap:4px; padding: 16px; transition: transform .2s ease, box-shadow .3s ease; }
+      .kpi h3 { margin:0; font-size:12px; color:var(--muted); font-weight:800; letter-spacing:.3px; }
+      .kpi p { margin:0; font-size:22px; font-weight:800; color:var(--fg); }
+      .kpi:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,.25); }
 
-      /* Exercise card */
-      .card { padding: 14px 14px; margin-bottom: 12px; }
+      /* Exercise cards with tilt-on-hover */
+      .card { padding: 16px 16px; margin-bottom: 12px; transform-style: preserve-3d; transition: transform .25s ease, box-shadow .25s ease; }
+      .card:hover { transform: translateY(-4px) rotateX(1deg) rotateY(-1deg); box-shadow: 0 16px 40px rgba(0,0,0,.35); }
       .card h4 { margin:0; font-weight:800; color:#eaf2ff; letter-spacing:.2px; }
-      .muted { color:#a7b7cc; }
-      .tag {
-        display:inline-block; padding:6px 10px; font-size:12px; border-radius:999px; margin-right:6px;
-        background: linear-gradient(90deg, rgba(99,102,241,0.35), rgba(16,185,129,0.35)); color:#eaf2ff; border:1px solid rgba(255,255,255,0.10)
-      }
+      .muted { color:var(--muted); }
+      .tag { display:inline-block; padding:6px 10px; font-size:12px; border-radius:999px; margin-right:6px; background: linear-gradient(90deg, rgba(99,102,241,0.35), rgba(16,185,129,0.35)); color:#eaf2ff; border:1px solid rgba(255,255,255,0.10); animation: tagPulse 3.5s ease-in-out infinite; }
+      @keyframes tagPulse { 0%,100%{filter: drop-shadow(0 0 0 rgba(99,102,241,.0))} 50%{filter: drop-shadow(0 0 8px rgba(99,102,241,.45))} }
       .hr { height:1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent); margin:10px 0 12px; }
 
-      /* Set pills */
-      .set-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:8px; }
-      .set-pill { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12);
-                  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03)); }
+      /* Set grid & pill states */
+      .set-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px; }
+      .set-pill { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03)); transition: transform .15s ease, box-shadow .2s ease, background .2s ease; }
+      .set-pill:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.25); }
+      /* Prefer CSS :has to glow when inner checkbox is checked (modern browsers) */
+      .set-pill:has(input:checked) { background: linear-gradient(180deg, rgba(16,185,129,0.15), rgba(16,185,129,0.08)); box-shadow: 0 0 0 1px rgba(16,185,129,0.35) inset, 0 12px 30px rgba(16,185,129,0.25); }
 
-      /* Buttons */
-      .btn-row { display:flex; gap:8px; }
+      /* Buttons with ripple */
+      .stButton>button { position: relative; overflow: hidden; border-radius:12px; font-weight:700; }
+      .stButton>button:after { content:""; position:absolute; left:50%; top:50%; width:0; height:0; background: radial-gradient(circle, rgba(255,255,255,.35) 10%, transparent 60%); transform: translate(-50%,-50%); transition: width .35s ease, height .35s ease; }
+      .stButton>button:active:after { width:220px; height:220px; }
+
+      /* Progress bar: animated stripes */
+      div[role="progressbar"] div { background-image: linear-gradient(90deg, rgba(99,102,241,.9), rgba(16,185,129,.9)); position: relative; }
+      div[role="progressbar"] div::after{ content:""; position:absolute; inset:0; background-size: 28px 28px; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.25) 0 14px, transparent 14px 28px); mix-blend-mode: overlay; animation: slide 2s linear infinite; }
+      @keyframes slide { to { background-position: 28px 0 } }
 
       /* Space tightening */
       .block-gap { margin-top: 8px; margin-bottom: 6px; }
+
+      /* Reduced motion */
+      @media (prefers-reduced-motion: reduce){
+        .blob, .card:hover, .kpi:hover, .tag, .glass::before, .app-title, .stars, div[role="progressbar"] div::after { animation: none !important; }
+      }
     </style>
     <div class="liquid-bg">
-      <div class="bubble b1"></div>
-      <div class="bubble b2"></div>
-      <div class="bubble b3"></div>
+      <div class="blob b1"></div>
+      <div class="blob b2"></div>
+      <div class="blob b3"></div>
+      <div class="stars"></div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -149,8 +169,6 @@ WORKOUT_PLAN = {
 
 DAY_OPTIONS = list(WORKOUT_PLAN.keys())
 
-# Utility: build a stable, unique key for each set checkbox
-
 def set_key(d_str: str, day: str, ex_idx: int, set_idx: int) -> str:
     return f"chk::{d_str}::{day}::ex{ex_idx}::set{set_idx}"
 
@@ -180,7 +198,7 @@ def _safe_rerun():
 # ==============
 # App Header
 # ==============
-st.markdown('<div class="glass app-header"><h1 class="app-title">Workout Progress Tracker</h1><p class="app-sub">Track sets across a 5‑day split. Liquid glass UI · No sidebar · Colorful & compact.</p></div>', unsafe_allow_html=True)
+st.markdown('<div class="glass app-header"><h1 class="app-title">Workout Progress Tracker</h1><p class="app-sub">Liquid glass · Animated UI · No sidebar · Compact, colorful controls.</p></div>', unsafe_allow_html=True)
 
 # Top sticky toolbar (no sidebar)
 with st.container():
@@ -191,7 +209,6 @@ with st.container():
         selected_date = st.date_input("Training Date", value=date.today(), format="YYYY-MM-DD")
         date_str = selected_date.isoformat()
     with c2:
-        # Day quick picker
         day_short = ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5"]
         default_idx = 0 if "__day_idx__" not in st.session_state else st.session_state["__day_idx__"]
         idx = st.selectbox("Day", options=list(range(5)), format_func=lambda i: day_short[i], index=default_idx, key="__select_day__")
@@ -201,7 +218,6 @@ with st.container():
         ex_names = [ex["name"] for ex in WORKOUT_PLAN[day]]
         chosen = st.selectbox("Workout", ["All exercises"] + ex_names, key=f"__ex_select_{idx}")
     with c4:
-        # Compact Sync & Reset controls
         with st.expander("☁️ Sync & Reset", expanded=False):
             export_data = {k: v for k, v in st.session_state.items() if isinstance(v, bool) and k.startswith("chk::")}
             if export_data:
@@ -281,9 +297,8 @@ st.progress(pct / 100 if T else 0.0, text=f"{pct}% complete")
 st.markdown("<div class='block-gap'></div>", unsafe_allow_html=True)
 
 # ==========================
-# Tracker: compact grid cards
+# Tracker: compact grid cards (unchanged functionality)
 # ==========================
-# Render one or many exercise cards
 render_all = chosen == "All exercises"
 exercises = WORKOUT_PLAN[day]
 
